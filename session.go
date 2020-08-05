@@ -340,6 +340,7 @@ func ParseURL(url string) (*DialInfo, error) {
 	}
 	ssl := false
 	direct := false
+	sslSkipVerify := false
 	mechanism := ""
 	service := ""
 	source := ""
@@ -356,6 +357,14 @@ func ParseURL(url string) (*DialInfo, error) {
 		case "ssl":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				ssl = true
+			}
+		case "sslAllowInvalidCertificates":
+			if v, err := strconv.ParseBool(opt.value); err == nil && v {
+				sslSkipVerify = true
+			}
+		case "sslAllowInvalidHostnames":
+			if v, err := strconv.ParseBool(opt.value); err == nil && v {
+				sslSkipVerify = true
 			}
 		case "authSource":
 			source = opt.value
@@ -475,7 +484,9 @@ func ParseURL(url string) (*DialInfo, error) {
 	if ssl && info.DialServer == nil {
 		// Set DialServer only if nil, we don't want to override user's settings.
 		info.DialServer = func(addr *ServerAddr) (net.Conn, error) {
-			conn, err := tls.Dial("tcp", addr.String(), &tls.Config{})
+			conn, err := tls.Dial("tcp", addr.String(), &tls.Config{
+				InsecureSkipVerify: sslSkipVerify,
+			})
 			return conn, err
 		}
 	}
@@ -2911,7 +2922,6 @@ func (p *Pipe) SetMaxTime(d time.Duration) *Pipe {
 	p.maxTimeMS = int64(d / time.Millisecond)
 	return p
 }
-
 
 // Collation allows to specify language-specific rules for string comparison,
 // such as rules for lettercase and accent marks.
