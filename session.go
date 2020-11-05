@@ -341,6 +341,7 @@ func ParseURL(url string) (*DialInfo, error) {
 	}
 	ssl := false
 	direct := false
+	sslSkipVerify := false
 	mechanism := ""
 	service := ""
 	source := ""
@@ -356,12 +357,16 @@ func ParseURL(url string) (*DialInfo, error) {
 	for _, opt := range uinfo.options {
 		switch opt.key {
 		case "ssl":
-			if v, err := strconv.ParseBool(opt.value); err == nil && v {
-				ssl = true
-			}
 		case "tls":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				ssl = true
+			}
+		case "sslAllowInvalidCertificates":
+		case "sslAllowInvalidHostnames":
+		case "tlsAllowInvalidCertificates":
+		case "tlsAllowInvalidHostnames":
+			if v, err := strconv.ParseBool(opt.value); err == nil && v {
+				sslSkipVerify = true
 			}
 		case "authSource":
 			source = opt.value
@@ -454,7 +459,7 @@ func ParseURL(url string) (*DialInfo, error) {
 			}
 			fallthrough
 		default:
-			return nil, errors.New("unsupported connection URL option: " + opt.key + "=" + opt.value)
+			fmt.Println("WARN: unsupported connection URL option: " + opt.key + "=" + opt.value)
 		}
 	}
 
@@ -483,7 +488,9 @@ func ParseURL(url string) (*DialInfo, error) {
 		MaxIdleTimeMS:  maxIdleTimeMS,
 	}
 	if ssl && info.DialServer == nil {
-		tlsConfig := tls.Config{}
+		tlsConfig := tls.Config{
+			InsecureSkipVerify: sslSkipVerify,
+		}
 
 		// Optionally load RootCAs from a file
 		if sslCAFile != "" {
