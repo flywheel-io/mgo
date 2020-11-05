@@ -356,15 +356,11 @@ func ParseURL(url string) (*DialInfo, error) {
 	safe := Safe{}
 	for _, opt := range uinfo.options {
 		switch opt.key {
-		case "ssl":
-		case "tls":
+		case "ssl", "tls":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				ssl = true
 			}
-		case "sslAllowInvalidCertificates":
-		case "sslAllowInvalidHostnames":
-		case "tlsAllowInvalidCertificates":
-		case "tlsAllowInvalidHostnames":
+		case "sslAllowInvalidCertificates", "sslAllowInvalidHostnames", "tlsAllowInvalidCertificates", "tlsAllowInvalidHostnames":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				sslSkipVerify = true
 			}
@@ -372,9 +368,7 @@ func ParseURL(url string) (*DialInfo, error) {
 			source = opt.value
 		case "authMechanism":
 			mechanism = opt.value
-		case "sslCAFile":
-			sslCAFile = opt.value
-		case "tlsCAFile":
+		case "sslCAFile", "tlsCAFile":
 			sslCAFile = opt.value
 		case "gssapiServiceName":
 			service = opt.value
