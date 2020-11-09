@@ -448,7 +448,7 @@ func ParseURL(url string) (*DialInfo, error) {
 			}
 			fallthrough
 		default:
-			fmt.Println("WARN: unsupported connection URL option: " + opt.key + "=" + opt.value)
+			return nil, errors.New("unsupported connection URL option: " + opt.key + "=" + opt.value)
 		}
 	}
 
