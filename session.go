@@ -341,7 +341,6 @@ func ParseURL(url string) (*DialInfo, error) {
 	}
 	ssl := false
 	direct := false
-	sslSkipVerify := false
 	mechanism := ""
 	service := ""
 	source := ""
@@ -356,19 +355,15 @@ func ParseURL(url string) (*DialInfo, error) {
 	safe := Safe{}
 	for _, opt := range uinfo.options {
 		switch opt.key {
-		case "ssl", "tls":
+		case "ssl":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				ssl = true
-			}
-		case "sslAllowInvalidCertificates", "sslAllowInvalidHostnames", "tlsAllowInvalidCertificates", "tlsAllowInvalidHostnames":
-			if v, err := strconv.ParseBool(opt.value); err == nil && v {
-				sslSkipVerify = true
 			}
 		case "authSource":
 			source = opt.value
 		case "authMechanism":
 			mechanism = opt.value
-		case "sslCAFile", "tlsCAFile":
+		case "sslCAFile":
 			sslCAFile = opt.value
 		case "gssapiServiceName":
 			service = opt.value
@@ -482,9 +477,7 @@ func ParseURL(url string) (*DialInfo, error) {
 		MaxIdleTimeMS:  maxIdleTimeMS,
 	}
 	if ssl && info.DialServer == nil {
-		tlsConfig := tls.Config{
-			InsecureSkipVerify: sslSkipVerify,
-		}
+		tlsConfig := tls.Config{}
 
 		// Optionally load RootCAs from a file
 		if sslCAFile != "" {
