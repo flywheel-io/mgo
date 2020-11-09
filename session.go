@@ -35,6 +35,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math"
 	"net"
 	"net/url"
@@ -347,6 +348,7 @@ func ParseURL(url string) (*DialInfo, error) {
 	poolLimit := 0
 	appName := ""
 	readPreferenceMode := Primary
+	sslCAFile := ""
 	var readPreferenceTagSets []bson.D
 	minPoolSize := 0
 	maxIdleTimeMS := 0
@@ -361,6 +363,8 @@ func ParseURL(url string) (*DialInfo, error) {
 			source = opt.value
 		case "authMechanism":
 			mechanism = opt.value
+		case "sslCAFile":
+			sslCAFile = opt.value
 		case "gssapiServiceName":
 			service = opt.value
 		case "replicaSet":
@@ -473,9 +477,24 @@ func ParseURL(url string) (*DialInfo, error) {
 		MaxIdleTimeMS:  maxIdleTimeMS,
 	}
 	if ssl && info.DialServer == nil {
+		tlsConfig := tls.Config{}
+
+		// Optionally load RootCAs from a file
+		if sslCAFile != "" {
+			cert, err := ioutil.ReadFile(sslCAFile)
+			if err != nil {
+				return nil, err
+			}
+
+			tlsConfig.RootCAs = x509.NewCertPool()
+			if !tlsConfig.RootCAs.AppendCertsFromPEM(cert) {
+				return nil, errors.New("Unable to load ca certs")
+			}
+		}
+
 		// Set DialServer only if nil, we don't want to override user's settings.
 		info.DialServer = func(addr *ServerAddr) (net.Conn, error) {
-			conn, err := tls.Dial("tcp", addr.String(), &tls.Config{})
+			conn, err := tls.Dial("tcp", addr.String(), &tlsConfig)
 			return conn, err
 		}
 	}
@@ -2911,7 +2930,6 @@ func (p *Pipe) SetMaxTime(d time.Duration) *Pipe {
 	p.maxTimeMS = int64(d / time.Millisecond)
 	return p
 }
-
 
 // Collation allows to specify language-specific rules for string comparison,
 // such as rules for lettercase and accent marks.
