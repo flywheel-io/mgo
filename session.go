@@ -355,7 +355,7 @@ func ParseURL(url string) (*DialInfo, error) {
 	safe := Safe{}
 	for _, opt := range uinfo.options {
 		switch opt.key {
-		case "ssl":
+		case "ssl", "tls":
 			if v, err := strconv.ParseBool(opt.value); err == nil && v {
 				ssl = true
 			}
@@ -363,7 +363,7 @@ func ParseURL(url string) (*DialInfo, error) {
 			source = opt.value
 		case "authMechanism":
 			mechanism = opt.value
-		case "sslCAFile":
+		case "sslCAFile", "tlsCAFile":
 			sslCAFile = opt.value
 		case "gssapiServiceName":
 			service = opt.value
